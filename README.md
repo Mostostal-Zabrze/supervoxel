@@ -75,6 +75,84 @@ The file "test.xyz" can be found in test_data.
 For comparison, we also provide our implementation of VCCS and its variant (See main.cc for more details). 
 Please feel free to use it.
 
+## Python wrapper (pybind11)
+
+This repository now includes a Python extension module built with:
+
+- pybind11
+- scikit-build-core
+- CMake
+
+The wrapped function is:
+
+```python
+segment_pcd(pts: ndarray, colors: ndarray) -> ndarray[int]
+```
+
+It also accepts optional keyword arguments:
+
+- `method`: `"vccs"` (default) or `"vccs_knn"`
+- `voxel_resolution`: used by `vccs`
+- `seed_resolution`: used by both methods
+- `spatial_importance`
+- `normal_importance`
+
+`colors` is validated for shape consistency (`N x 3`) and row count with `pts`,
+but is not used inside the segmentation metric.
+
+### Build requirements
+
+- Python 3.8+
+- CMake 3.15+
+- A C++11 compiler:
+	- Windows: MSVC (Visual Studio Build Tools 2019+)
+	- Linux/WSL: GCC or Clang
+
+### Install (editable)
+
+From repository root:
+
+```bash
+pip install -U pip
+pip install -e .
+```
+
+### Build a wheel
+
+```bash
+pip install build
+python -m build
+```
+
+### Platform notes
+
+- Windows: open a Developer PowerShell (or normal PowerShell with Build Tools in PATH), then run the install commands above.
+- WSL: use the same Linux steps inside WSL. If needed, install `build-essential`, `cmake`, and Python dev packages.
+- Linux: install compiler toolchain and CMake using your package manager, then run the same `pip` commands.
+
+### Python usage example
+
+```python
+import numpy as np
+from supervoxel import segment_pcd
+
+# N x 3 points (float)
+pts = np.random.rand(1000, 3).astype(np.float64)
+
+# N x 3 colors (validated only)
+colors = np.random.rand(1000, 3).astype(np.float64)
+
+labels = segment_pcd(pts, colors)
+print(labels.shape, labels.dtype)
+
+labels_knn = segment_pcd(
+		pts,
+		colors,
+		method="vccs_knn",
+		seed_resolution=1.0,
+)
+```
+
 ## Sample results. 
 
 The first column is the orignal point cloud with ground-truth annotation. The second column is the supervoxel segmentation by VCCS (found in vccs_supervoxel.h) . The third column is the VCCS method with kNN variation (found in vccs_knn_supervoxel.h). And the last column is the result obtained by our method.
